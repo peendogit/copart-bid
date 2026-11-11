@@ -41,7 +41,7 @@ label{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin:10p
 .sum div{background:#fff;border-radius:14px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(20,40,90,.07)}
 .sum b{display:block;font-size:20px}.sum span{font-size:11.5px;color:var(--mut);font-weight:600}
 .fab{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));display:flex;gap:10px;max-width:692px;margin:0 auto;z-index:6}
-.fab .btn{flex:1;padding:15px;font-size:15px;box-shadow:0 6px 18px rgba(30,95,214,.3)}
+.fab .btn{flex:1;padding:15px 6px;font-size:15px;box-shadow:0 6px 18px rgba(30,95,214,.3)}
 table.calc{width:100%;border-collapse:collapse;font-size:14px}
 table.calc td{padding:6px 2px;border-bottom:1px solid var(--line)}
 table.calc td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -72,7 +72,9 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
 .prog i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#16223a;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:99;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90%;text-align:center}
 .toast.on{opacity:1}
-.kv{display:flex;gap:8px;margin-bottom:6px}.kv input{padding:8px 10px}
+.kv{display:flex;gap:8px;margin-bottom:6px;align-items:center}.kv input{padding:8px 10px;min-width:0}
+.kv .ime{flex:1;min-width:0;font-weight:700;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kv input.iz{flex:none;width:96px}
 .hide{display:none!important}
 </style>
 </head>
@@ -164,10 +166,12 @@ dialog::backdrop{background:rgba(10,20,40,.5)}
 </main>
 
 <div class="fab" id="fab">
-  <button class="btn a" id="addImg">📷 Dodaj sa slike</button>
-  <button class="btn p" id="addMan" style="flex:.6">✍️ Ručno</button>
+  <button class="btn a" id="addCam">📷 Kamera</button>
+  <button class="btn a" id="addImg">🖼️ Galerija</button>
+  <button class="btn p" id="addMan" style="flex:.7">✍️ Ručno</button>
 </div>
 <input type="file" id="imgIn" accept="image/*" class="hide">
+<input type="file" id="camIn" accept="image/*" capture="environment" class="hide">
 
 <dialog id="dlg">
   <div class="dh"><button class="btn sm" id="dClose">✕</button><b id="dTitle">Bid</b><button class="btn sm p" id="dSave">Sačuvaj</button></div>
@@ -680,7 +684,8 @@ function kalendar(b) {
 const prazan = () => ({ id: uid(), lot: '', vozilo: '', lokacija: '', maxBid: null, datumUtc: null, vatNaCijenu: false, status: 'aktivan', konacnaCijena: null, stvarniBuyerFee: null, napomena: '', slika: null, createdAt: new Date().toISOString() });
 $('#addMan').onclick = () => otvori(prazan(), true);
 $('#addImg').onclick = () => $('#imgIn').click();
-$('#imgIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) obradiSliku(f); };
+$('#addCam').onclick = () => $('#camIn').click();
+$('#camIn').onchange = $('#imgIn').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) obradiSliku(f); };
 
 function ucitajSliku(blob) { return new Promise((res, rej) => { const u = URL.createObjectURL(blob); const i = new Image(); i.onload = () => { res(i); }; i.onerror = rej; i.src = u; }); }
 function canvasIz(img, max, gray) {
@@ -764,7 +769,7 @@ function renderPod() {
   parovi('#podBuyer', S.buyerFee, 'bid £', 'fee £');
   parovi('#podNet', S.internetFee, 'od £', 'fee £');
   const lok = Object.keys(S.transport).sort();
-  $('#podTr').innerHTML = lok.map(k => `<div class="kv"><input value="${esc(k)}" disabled style="flex:2"><input type="number" inputmode="decimal" data-t="${esc(k)}" value="${S.transport[k]}"><button class="btn sm r" data-tx="${esc(k)}">✕</button></div>`).join('');
+  $('#podTr').innerHTML = lok.map(k => `<div class="kv"><span class="ime">${esc(k)}</span><input class="iz" type="number" inputmode="decimal" data-t="${esc(k)}" value="${S.transport[k]}"><button class="btn sm r" data-tx="${esc(k)}">✕</button></div>`).join('');
   $('#podTr').querySelectorAll('[data-t]').forEach(i => i.onchange = () => { S.transport[i.dataset.t] = +i.value; saveS(); });
   $('#podTr').querySelectorAll('[data-tx]').forEach(x => x.onclick = () => { if (confirm('Obrisati ' + x.dataset.tx + '?')) { delete S.transport[x.dataset.tx]; saveS(); renderPod(); } });
   $('#trDef').value = S.transportDefault; $('#trDef').onchange = () => { S.transportDefault = +$('#trDef').value; saveS(); };
